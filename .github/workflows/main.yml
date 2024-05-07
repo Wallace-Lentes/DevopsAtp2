@@ -1,0 +1,46 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-job:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Build and push Docker image
+        run: |
+          docker login
+          docker build -t wallace-lentes/devops:tagname
+          docker push wallacelentes/devops:tagname
+  test-job:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: build-job
+    steps:
+      - name: run test
+        run: |
+          docker run -p 8080:3000 wallace-lentes/devops
+
+  deploy-job:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: test-job
+
+    steps:
+      - name: Checkout
+        run: echo "Finalizado"
+
+      - name: Send Discord Message
+        if: ${{ always() }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"content":"Deploy da aplicação realizado com sucesso!"}' "https://discordapp.com/api/webhooks/1235686000949465138/butqKzrI_HIEHGU4tMRIVUC2_o0Z8rMChBZXJwcpromxTC7xtafbhsr63Edq2j6s0_mN"
